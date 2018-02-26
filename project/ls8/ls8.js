@@ -2,6 +2,7 @@ const fs = require('fs');
 const RAM = require('./ram');
 const CPU = require('./cpu');
 
+
 /**
  * Process a loaded file
  */
@@ -30,6 +31,9 @@ function processFile(content, cpu, onComplete) {
         // Store in the CPU with the .poke() function
 
         // And on to the next one
+        if (line.startsWith('#') || line.trim().length === 0) continue;
+        line = parseInt(line.split('#')[0].trim(), 2);
+        cpu.poke(curAddr, line);
         curAddr++;
     }
 
