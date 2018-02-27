@@ -2,10 +2,9 @@
  * RAM access
  */
 class RAM {
-
     /**
      * Constructor
-     * 
+     *
      * @param {*} size Size of RAM in bytes MUST be a power of 2
      */
     constructor(size) {
@@ -19,18 +18,18 @@ class RAM {
     write(MAR, MDR) {
         // !!! IMPLEMENT ME
         // write the value in the MDR to the address MAR
-        this.mem[MAR & (size-1)] = MDR;
+        this.mem[MAR & (this.mem.length - 1)] = MDR;
     }
 
     /**
      * Read (load) MDR value from address MAR
-     * 
+     *
      * @returns MDR
      */
     read(MAR) {
         // !!! IMPLEMENT ME
         // Read the value in address MAR and return it
-        return this.mem[MAR & (size-1)];
+        return this.mem[MAR & (this.mem.length - 1)];
     }
 }
 

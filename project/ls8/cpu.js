@@ -6,7 +6,7 @@ const fs = require('fs');
 
 // Instructions
 
-const HLT  = 0b00000001; // Halt CPU
+const HLT = 0b00000001; // Halt CPU
 // !!! IMPLEMENT ME
 // LDI
 const LDI = 0b10011001;
@@ -17,48 +17,54 @@ const PRN = 0b01000011;
 // ADD
 const ADD = 0b10101000;
 // AND
-const ADN = 0b10101000;
+const AND = 0b10110011;
 // NOP
 const NOP = 0b00000000;
 // POP
 const POP = 0b01001100;
+// PUSH
+const PUSH = 0b01001101;
 // INC
 const INC = 0b01111000;
 // DEC
 const DEC = 0b01111001;
+// DIV
+const DIV = 0b10101011;
+// CMP
+const CMP = 0b10100000;
 
 // General registers
-const SP = 0x07;
+const SP = 0b00000111;
 
 /**
  * Class for simulating a simple Computer (CPU & memory)
  */
 class CPU {
-
     /**
      * Initialize the CPU
      */
     constructor(ram) {
         this.ram = ram;
+        this.reg = new Array(8).fill(0); // General-purpose registers
+
         // initialize SP of stack in ram;
         this.reg[SP] = 0xf3;
 
-        this.reg = new Array(8).fill(0); // General-purpose registers
-        
         // Special-purpose registers
         this.reg.PC = 0; // Program Counter
         this.reg.IR = 0; // Instruction Register
+        this.reg.FL = 0; // Flag Register
 
-		this.setupBranchTable();
+        this.setupBranchTable();
     }
-	
-	/**
-	 * Sets up the branch table
-	 */
-	setupBranchTable() {
-		let bt = {};
 
-        bt[HLT] = this.HLT;  // Halt CPU
+    /**
+     * Sets up the branch table
+     */
+    setupBranchTable() {
+        let bt = {};
+
+        bt[HLT] = this.HLT; // Halt CPU
         // LDI
         bt[LDI] = this.LDI; // ADD R R
         // MUL
@@ -74,12 +80,17 @@ class CPU {
         // INC
         bt[INC] = this.INC; // INC R
         // DEC
-        bt[DEC] = this.DEC; //DEC R
+        bt[DEC] = this.DEC; // DEC R
+        // DIV
+        bt[DIV] = this.DIV; // DIV R R
+        bt[CMP] = this.CMP; // CMP R R
         // POP
         bt[POP] = this.POP; // POP R
+        // PUSH
+        bt[PUSH] = this.PUSH; // PUSH R
 
-		this.branchTable = bt;
-	}
+        this.branchTable = bt;
+    }
 
     /**
      * Store value in memory address, useful for program loading
@@ -108,7 +119,7 @@ class CPU {
 
     /**
      * ALU functionality
-     * 
+     *
      * op can be: ADD SUB MUL DIV INC DEC CMP
      */
     alu(op, regA, regB) {
@@ -122,10 +133,31 @@ class CPU {
                 break;
             case 'AND':
                 this.reg[regA] = this.reg[regA] & this.reg[regB];
+                break;
             case 'INC':
                 this.reg[regA] += 1;
+                break;
             case 'DEC':
                 this.reg[regA] -= 1;
+                break;
+            case 'DIV':
+                if (this.reg[regB] === 0) {
+                    console.error('Divider cannot be zero', this.reg[regB]);
+                    this.HLT();
+                }
+                this.reg[regA] = this.reg[regA] / this.reg[regB];
+                break;
+            case 'CMP':
+                if (this.reg[regA] === this.reg[regB]) {
+                    this.reg.FL = this.reg.FL | 0b00000001;
+                }
+                if (this.reg[regA] > this.reg[regB]) {
+                    this.reg.FL = this.reg.FL | 0b00000010;
+                }
+                if (this.reg[regA] < this.reg[regB]) {
+                    this.reg.FL = this.reg.FL | 0b00000100;
+                }
+                break;
         }
     }
 
@@ -134,7 +166,7 @@ class CPU {
      */
     tick() {
         // Load the instruction register (IR) from the current PC
-        // !!! IMPLEMENT 
+        // !!! IMPLEMENT
         this.reg.IR = this.ram.read(this.reg.PC);
         // Debugging output
         // console.log(`${this.reg.PC}: ${this.reg.IR.toString(2)}`);
@@ -142,7 +174,7 @@ class CPU {
         // Based on the value in the Instruction Register, locate the
         // appropriate hander in the branchTable
         // !!! IMPLEMENT ME
-        let offset = (this.reg.IR >> 6) & 0b00000011 ;
+        let offset = (this.reg.IR >> 6) & 0b00000011;
 
         const operandA = this.ram.read(this.reg.PC + 1);
         const operandB = this.ram.read(this.reg.PC + 2);
@@ -154,7 +186,7 @@ class CPU {
         if (!handler) {
             this.HLT();
             return undefined;
-        } 
+        }
         // We need to use call() so we can set the "this" value inside
         // the handler (otherwise it will be undefined in the handler)
         handler.call(this, operandA, operandB);
@@ -231,6 +263,20 @@ class CPU {
      */
     DEC(regA) {
         this.alu('DEC', regA);
+    }
+
+    /**
+     * DIV R,R
+     */
+    DIV(regA, regB) {
+        this.alu('DIV', regA, regB);
+    }
+
+    /**
+     * CMP R,R
+     */
+    CMP(regA, regB) {
+        this.alu('CMP', regA, regB);
     }
 
     _pop() {
