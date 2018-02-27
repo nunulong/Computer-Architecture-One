@@ -20,6 +20,15 @@ const ADD = 0b10101000;
 const ADN = 0b10101000;
 // NOP
 const NOP = 0b00000000;
+// POP
+const POP = 0b01001100;
+// INC
+const INC = 0b01111000;
+// DEC
+const DEC = 0b01111001;
+
+// General registers
+const SP = 0x07;
 
 /**
  * Class for simulating a simple Computer (CPU & memory)
@@ -31,6 +40,8 @@ class CPU {
      */
     constructor(ram) {
         this.ram = ram;
+        // initialize SP of stack in ram;
+        this.reg[SP] = 0xf3;
 
         this.reg = new Array(8).fill(0); // General-purpose registers
         
@@ -60,6 +71,12 @@ class CPU {
         bt[AND] = this.AND; // AND R R
         // NOP
         bt[NOP] = this.NOP; // NOP
+        // INC
+        bt[INC] = this.INC; // INC R
+        // DEC
+        bt[DEC] = this.DEC; //DEC R
+        // POP
+        bt[POP] = this.POP; // POP R
 
 		this.branchTable = bt;
 	}
@@ -105,6 +122,10 @@ class CPU {
                 break;
             case 'AND':
                 this.reg[regA] = this.reg[regA] & this.reg[regB];
+            case 'INC':
+                this.reg[regA] += 1;
+            case 'DEC':
+                this.reg[regA] -= 1;
         }
     }
 
@@ -196,6 +217,39 @@ class CPU {
      */
     NOP() {
         return undefined;
+    }
+
+    /**
+     * INC R
+     */
+    INC(regA) {
+        this.alu('INC', regA);
+    }
+
+    /**
+     * DEC R
+     */
+    DEC(regA) {
+        this.alu('DEC', regA);
+    }
+
+    _pop() {
+        const value = this.ram.read(this.reg[SP]);
+        this.alu('INC', SP);
+        return value;
+    }
+
+    POP(regA) {
+        this.reg[regA] = this._pop();
+    }
+
+    _push(value) {
+        this.alu('DEC', SP);
+        this.ram.write(this.reg[SP], value);
+    }
+
+    PUSH(regA) {
+        this._push(this.reg[regA]);
     }
 }
 
