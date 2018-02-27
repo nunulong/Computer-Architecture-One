@@ -32,7 +32,9 @@ function processFile(content, cpu, onComplete) {
 
         // And on to the next one
         if (line.startsWith('#') || line.trim().length === 0) continue;
+
         line = parseInt(line.split('#')[0].trim(), 2);
+        
         cpu.poke(curAddr, line);
         curAddr++;
     }
