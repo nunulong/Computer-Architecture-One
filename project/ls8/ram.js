@@ -2,6 +2,12 @@
  * RAM access
  */
 class RAM {
+
+    /**
+     * Constructor
+     * 
+     * @param {*} size Size of RAM in bytes MUST be a power of 2
+     */
     constructor(size) {
         this.mem = new Array(size);
         this.mem.fill(0);
@@ -13,7 +19,7 @@ class RAM {
     write(MAR, MDR) {
         // !!! IMPLEMENT ME
         // write the value in the MDR to the address MAR
-        this.mem[MAR] = MDR;
+        this.mem[MAR & (size-1)] = MDR;
     }
 
     /**
@@ -24,7 +30,7 @@ class RAM {
     read(MAR) {
         // !!! IMPLEMENT ME
         // Read the value in address MAR and return it
-        return this.mem[MAR];
+        return this.mem[MAR & (size-1)];
     }
 }
 

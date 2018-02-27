@@ -16,6 +16,10 @@ const MUL = 0b10101010;
 const PRN = 0b01000011;
 // ADD
 const ADD = 0b10101000;
+// AND
+const ADN = 0b10101000;
+// NOP
+const NOP = 0b00000000;
 
 /**
  * Class for simulating a simple Computer (CPU & memory)
@@ -43,16 +47,19 @@ class CPU {
 	setupBranchTable() {
 		let bt = {};
 
-        bt[HLT] = this.HLT;
-        // !!! IMPLEMENT ME
+        bt[HLT] = this.HLT;  // Halt CPU
         // LDI
-        bt[LDI] = this.LDI;
+        bt[LDI] = this.LDI; // ADD R R
         // MUL
-        bt[MUL] = this.MUL;
+        bt[MUL] = this.MUL; // MUL R R
         // PRN
-        bt[PRN] = this.PRN;
+        bt[PRN] = this.PRN; // PRN R
         // ADD
-        bt[ADD] = this.ADD;
+        bt[ADD] = this.ADD; // ADD R R
+        // AND
+        bt[AND] = this.AND; // AND R R
+        // NOP
+        bt[NOP] = this.NOP; // NOP
 
 		this.branchTable = bt;
 	}
@@ -96,6 +103,8 @@ class CPU {
             case 'ADD':
                 this.reg[regA] = this.reg[regA] + this.reg[regB];
                 break;
+            case 'AND':
+                this.reg[regA] = this.reg[regA] & this.reg[regB];
         }
     }
 
@@ -173,6 +182,20 @@ class CPU {
     PRN(regA) {
         // !!! IMPLEMENT ME
         console.log(this.reg[regA]);
+    }
+
+    /**
+     * AND R,R
+     */
+    AND(regA, regB) {
+        this.alu('AND', regA, regB);
+    }
+
+    /**
+     * NOP
+     */
+    NOP() {
+        return undefined;
     }
 }
 
