@@ -32,6 +32,20 @@ const DEC = 0b01111001;
 const DIV = 0b10101011;
 // CMP
 const CMP = 0b10100000;
+// CALL
+const CALL = 0b01001000;
+// JEQ
+const JEQ = 0b01010001;
+// MOD
+const MOD = 0b10101100;
+// NOT
+const NOT = 0b01110000;
+// OR
+const OR = 0b10110001;
+// SUB
+const SUB = 0b10101001;
+// XOR
+const XOR = 0b10110010;
 
 // General registers
 const SP = 0b00000111;
@@ -88,6 +102,20 @@ class CPU {
         bt[POP] = this.POP; // POP R
         // PUSH
         bt[PUSH] = this.PUSH; // PUSH R
+        // CALL
+        bt[CALL] = this.CALL; // CALL R
+        // JEQ
+        bt[JEQ] = this.JEQ; // JEQ R
+        // MOD
+        bt[MOD] = this.MOD; // MOD R,R
+        // NOT
+        bt[NOT] = this.NOT; // NOT R
+        // OR
+        bt[OR] = this.OR; // OR R,R
+        // SUB
+        bt[SUB] = this.SUB; // SUB R,R
+        // XOR
+        bt[XOR] = this.XOR; // XOR R,R
 
         this.branchTable = bt;
     }
@@ -158,6 +186,25 @@ class CPU {
                     this.reg.FL = this.reg.FL | 0b00000100;
                 }
                 break;
+            case 'MOD':
+                if (this.reg[regB] === 0) {
+                    console.error('Divder cannot be zeor', this.reg[regB]);
+                    this.HLT();
+                }
+                this.reg[regA] = this.reg[regA] % this.reg[regB];
+                break;
+            case 'NOT':
+                this.reg[regA] = ~this.reg[regA];
+                break;
+            case 'OR':
+                this.reg[regA] = this.reg[regA] | this.reg[regB];
+                break;
+            case 'SUB':
+                this.reg[regA] = this.reg[regA] - this.reg[regB];
+                break;
+            case 'XOR':
+                this.reg[regA] = this.reg[regA] ^ this.reg[regB];
+                break;
         }
     }
 
@@ -187,6 +234,7 @@ class CPU {
             this.HLT();
             return undefined;
         }
+
         // We need to use call() so we can set the "this" value inside
         // the handler (otherwise it will be undefined in the handler)
         handler.call(this, operandA, operandB);
@@ -296,6 +344,37 @@ class CPU {
 
     PUSH(regA) {
         this._push(this.reg[regA]);
+    }
+
+    JEQ(regA) {
+        if (this.reg.FL === 1) {
+            return this.reg[regA];
+        }
+    }
+
+    CALL(regA) {
+        this._push(this.reg.PC + 2);
+        return this.reg[regA];
+    }
+
+    MOD(regA, regB) {
+        this.alu('MOD', regA, regB);
+    }
+
+    NOT(regA) {
+        this.alu('NOT', regA);
+    }
+
+    OR(regA, regB) {
+        this.alu('OR', regA, regB);
+    }
+
+    SUB(regA, regB) {
+        this.alu('SUB', regA, regB);
+    }
+
+    XOR(regA, regB) {
+        this.alu('XOR', regA, regB);
     }
 }
 
