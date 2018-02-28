@@ -62,7 +62,7 @@ class CPU {
         this.reg = new Array(8).fill(0); // General-purpose registers
 
         // initialize SP of stack in ram;
-        this.reg[SP] = 0xf3;
+        this.reg[SP] = 0xf4;
 
         // Special-purpose registers
         this.reg.PC = 0; // Program Counter
@@ -354,7 +354,7 @@ class CPU {
 
     CALL(regA) {
         this._push(this.reg.PC + 2);
-        return this.reg[regA];
+        this.reg.PC = this.reg[regA];
     }
 
     MOD(regA, regB) {
