@@ -2,7 +2,6 @@ const fs = require('fs');
 const RAM = require('./ram');
 const CPU = require('./cpu');
 
-
 /**
  * Process a loaded file
  */
@@ -10,14 +9,13 @@ function processFile(content, cpu, onComplete) {
     // Pointer to the memory address in the CPU that we're
     // loading a value into:
     let curAddr = 0;
-    
+
     // Split the lines of the content up by newline
     const lines = content.split('\n');
 
     // Loop through each line of machine code
 
     for (let line of lines) {
-
         // !!! IMPLEMENT ME
 
         // Strip comments
@@ -34,7 +32,7 @@ function processFile(content, cpu, onComplete) {
         if (line.startsWith('#') || line.trim().length === 0) continue;
 
         line = parseInt(line.split('#')[0].trim(), 2);
-        
+
         cpu.poke(curAddr, line);
         curAddr++;
     }
@@ -51,8 +49,12 @@ function loadFileFromStdin(cpu, onComplete) {
     // Read everything from standard input, stolen from:
     // https://stackoverflow.com/questions/13410960/how-to-read-an-entire-text-stream-in-node-js
     process.stdin.resume();
-    process.stdin.on('data', function(buf) { content += buf.toString(); });
-    process.stdin.on('end', () => { processFile(content, cpu, onComplete); });
+    process.stdin.on('data', function(buf) {
+        content += buf.toString();
+    });
+    process.stdin.on('end', () => {
+        processFile(content, cpu, onComplete);
+    });
 }
 
 /**
@@ -65,7 +67,7 @@ function loadFile(filename, cpu, onComplete) {
 
 /**
  * On File Loaded
- * 
+ *
  * CPU is set up, start it running
  */
 function onFileLoaded(cpu) {
