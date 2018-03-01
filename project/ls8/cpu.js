@@ -47,8 +47,26 @@ const SUB = 0b10101001;
 const XOR = 0b10110010;
 // RET
 const RET = 0b00001001;
+// JGT
+const JGT = 0b01010100;
+// JLT
+const JLT = 0b01010011;
+// JMP
+const JMP = 0b01010000;
+// JNE
+const JNE = 0b01010010;
+// LD
+const LD = 0b10011000;
+// PRA
+const PRA = 0b01000010;
+// ST
+const ST = 0b10011010;
+// IRET
+const IRET = 0b00001011;
 
 // General registers
+const IM = 0b00000101;
+const IS = 0b00000110;
 const SP = 0b00000111;
 
 /**
@@ -119,6 +137,22 @@ class CPU {
         bt[XOR] = this.XOR; // XOR R,R
         // RET
         bt[RET] = this.RET; // RET
+        // JGT
+        bt[JGT] = this.JGT; // JGT R
+        // JLT
+        bt[JLT] = this.JLT; // JLT R
+        // JMP
+        bt[JMP] = this.JMP; // JMP R
+        // JNE
+        bt[JNE] = this.JNE; // JNE R
+        // LD
+        bt[LD] = this.LD; // LD R,R
+        // PRA
+        bt[PRA] = this.PRA; // PRA R
+        // ST
+        bt[ST] = this.ST; // ST R,R
+        // IRET
+        bt[IRET] = this.IRET; // IRET
 
         this.branchTable = bt;
     }
@@ -351,6 +385,28 @@ class CPU {
         }
     }
 
+    JGT(regA) {
+        if (this.reg.FL === 2) {
+            return this.reg[regA];
+        }
+    }
+
+    JLT(regA) {
+        if (this.reg.FL === 4) {
+            return this.reg[regA];
+        }
+    }
+
+    JMP(regA) {
+        return this.reg[regA];
+    }
+
+    JNE(regA) {
+        if (this.reg.FL === 0) {
+            return this.reg[regA];
+        }
+    }
+
     CALL(regA) {
         this._push(this.reg.PC + 2);
         return this.reg[regA];
@@ -379,6 +435,22 @@ class CPU {
     RET() {
         return this._pop();
     }
+
+    LD(regA, regB) {
+        this.reg[regA] = this.ram.read(this.reg[regB]);
+    }
+
+    PRA(regA) {
+        const value = this.reg[regA];
+        console.log(String.fromCharCode(value));
+    }
+
+    ST(regA, regB) {
+        const value = this.reg[regB];
+        this.ram.write(this.reg[regA], value);
+    }
+
+    IRET() {}
 }
 
 module.exports = CPU;
