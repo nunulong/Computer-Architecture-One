@@ -69,6 +69,22 @@ const IM = 0b00000101;
 const IS = 0b00000110;
 const SP = 0b00000111;
 
+// Flag values
+const FL_EQ = 0b00000001;
+const FL_GT = 0b00000010;
+const FL_LT = 0b00000100;
+
+// Interrupt mask
+const interruptMask = [
+    0b00000001,
+    0b00000010,
+    0b00000100,
+    0b00001000,
+    0b00010000,
+    0b00100000,
+    0b01000000,
+    0b10000000
+];
 /**
  * Class for simulating a simple Computer (CPU & memory)
  */
@@ -82,11 +98,17 @@ class CPU {
 
         // initialize SP of stack in ram;
         this.reg[SP] = 0xf4;
+        // initialize IM and IS
+        this.reg[IM] = 0;
+        this.reg[IS] = 0;
 
         // Special-purpose registers
         this.reg.PC = 0; // Program Counter
         this.reg.IR = 0; // Instruction Register
         this.reg.FL = 0; // Flag Register
+
+        // initialize flag of interrupt
+        this.interruptEnabled = true;
 
         this.setupBranchTable();
     }
@@ -173,6 +195,10 @@ class CPU {
         this.clock = setInterval(() => {
             _this.tick();
         }, 1);
+
+        this.interruptClock = setInterval(() => {
+            _this.interrupt(0);
+        }, 1000);
     }
 
     /**
@@ -180,6 +206,20 @@ class CPU {
      */
     stopClock() {
         clearInterval(this.clock);
+        clearInterval(this.interruptClock);
+    }
+
+    /**
+     * Set Flag
+     */
+    setFlag(flag, value) {
+        if (value === true) {
+            //Set the Flag
+            this.reg.FL = this.reg.FL | flag;
+        } else {
+            // Clear the Flag to 0
+            this.reg.FL = this.reg.FL & ~flag;
+        }
     }
 
     /**
@@ -212,15 +252,9 @@ class CPU {
                 this.reg[regA] = this.reg[regA] / this.reg[regB];
                 break;
             case 'CMP':
-                if (this.reg[regA] === this.reg[regB]) {
-                    this.reg.FL = this.reg.FL | 0b00000001;
-                }
-                if (this.reg[regA] > this.reg[regB]) {
-                    this.reg.FL = this.reg.FL | 0b00000010;
-                }
-                if (this.reg[regA] < this.reg[regB]) {
-                    this.reg.FL = this.reg.FL | 0b00000100;
-                }
+                this.setFlag(FL_EQ, this.reg[regA] === this.reg[regB]);
+                this.setFlag(FL_GT, this.reg[regA] > this.reg[regB]);
+                this.setFlag(FL_LT, this.reg[regA] < this.reg[regB]);
                 break;
             case 'MOD':
                 if (this.reg[regB] === 0) {
@@ -245,9 +279,33 @@ class CPU {
     }
 
     /**
+     * Start interrupt
+     */
+    interrupt(n) {
+        this.reg[IS] = this.reg[IS] | interruptMask[n];
+    }
+
+    /**
      * Advances the CPU one cycle
      */
     tick() {
+        if (this.interruptEnabled) {
+            let interrupts = this.reg[IS] & this.reg[IM];
+            for (let i = 0; i < 8; i++) {
+                let interruptHappened = ((interrupts >> i) & 1) === 1;
+                if (interruptHappened) {
+                    this.interruptEnabled = false;
+                    this.reg[IS] = this.reg[IS] & ~interruptMask[i];
+                    this._push(this.reg.PC);
+                    this._push(this.reg.FL);
+                    for (let i = 0; i < 6; i++) {
+                        this._push(this.reg[i]);
+                    }
+                    this.reg.PC = this.ram.read(0xf8 + i);
+                    break;
+                }
+            }
+        }
         // Load the instruction register (IR) from the current PC
         this.reg.IR = this.ram.read(this.reg.PC);
         // Debugging output
@@ -380,19 +438,19 @@ class CPU {
     }
 
     JEQ(regA) {
-        if (this.reg.FL === 1) {
+        if ((this.reg.FL & FL_EQ) === 1) {
             return this.reg[regA];
         }
     }
 
     JGT(regA) {
-        if (this.reg.FL === 2) {
+        if ((this.reg.FL & FL_GT) === 2) {
             return this.reg[regA];
         }
     }
 
     JLT(regA) {
-        if (this.reg.FL === 4) {
+        if ((this.reg.FL & FL_LT) === 4) {
             return this.reg[regA];
         }
     }
@@ -402,7 +460,7 @@ class CPU {
     }
 
     JNE(regA) {
-        if (this.reg.FL === 0) {
+        if ((this.reg.FL & FL_EQ) === 0) {
             return this.reg[regA];
         }
     }
@@ -450,7 +508,15 @@ class CPU {
         this.ram.write(this.reg[regA], value);
     }
 
-    IRET() {}
+    IRET() {
+        for (let i = 0; i < 7; i++) {
+            this.reg[i] = this._pop();
+        }
+        this.reg.FL = this._pop();
+        this.interruptEnabled = true;
+        const newPC = this._pop();
+        return newPC;
+    }
 }
 
 module.exports = CPU;
