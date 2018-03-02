@@ -309,7 +309,7 @@ class CPU {
         // Load the instruction register (IR) from the current PC
         this.reg.IR = this.ram.read(this.reg.PC);
         // Debugging output
-        console.log(`${this.reg.PC}: ${this.reg.IR.toString(2)}`);
+        // console.log(`${this.reg.PC}: ${this.reg.IR.toString(2)}`);
 
         // Based on the value in the Instruction Register, locate the
         // appropriate hander in the branchTable
