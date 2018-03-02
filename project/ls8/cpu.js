@@ -8,7 +8,7 @@ const fs = require('fs');
 
 const HLT = 0b00000001; // Halt CPU
 // LDI
-const LDI = 0b10011001;
+const LDI = 0b10011001; // Assign the value to Register
 // MUL
 const MUL = 0b10101010;
 // PRN
@@ -290,9 +290,9 @@ class CPU {
      */
     tick() {
         if (this.interruptEnabled) {
-            let interrupts = this.reg[IS] & this.reg[IM];
+            const interrupts = this.reg[IS] & this.reg[IM];
             for (let i = 0; i < 8; i++) {
-                let interruptHappened = ((interrupts >> i) & 1) === 1;
+                const interruptHappened = ((interrupts >> i) & 0b1) === 1;
                 if (interruptHappened) {
                     this.interruptEnabled = false;
                     this.reg[IS] = this.reg[IS] & ~interruptMask[i];
@@ -309,7 +309,7 @@ class CPU {
         // Load the instruction register (IR) from the current PC
         this.reg.IR = this.ram.read(this.reg.PC);
         // Debugging output
-        // console.log(`${this.reg.PC}: ${this.reg.IR.toString(2)}`);
+        console.log(`${this.reg.PC}: ${this.reg.IR.toString(2)}`);
 
         // Based on the value in the Instruction Register, locate the
         // appropriate hander in the branchTable
@@ -318,7 +318,7 @@ class CPU {
         const operandA = this.ram.read(this.reg.PC + 1);
         const operandB = this.ram.read(this.reg.PC + 2);
 
-        let handler = this.branchTable[this.reg.IR];
+        const handler = this.branchTable[this.reg.IR];
         // Check that the handler is defined, halt if not (invalid
         // instruction)
         if (!handler) {
@@ -328,7 +328,7 @@ class CPU {
 
         // We need to use call() so we can set the "this" value inside
         // the handler (otherwise it will be undefined in the handler)
-        let nextPC = handler.call(this, operandA, operandB);
+        const nextPC = handler.call(this, operandA, operandB);
 
         if (nextPC !== undefined) {
             this.reg.PC = nextPC;
